@@ -22,3 +22,5 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 app.use('/api/location', require('./routes/location'));
 
+app.use('/api/friends', require('./routes/friend'));
+

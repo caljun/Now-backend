@@ -1,20 +1,35 @@
 const Location = require('../models/Location');
 
+// 関学構内判定（長方形エリア）
+const isInsideCampus = (lat, lng) => {
+  return (
+    lat >= 34.788500 && lat <= 34.792500 &&
+    lng >= 135.351000 && lng <= 135.357500
+  );
+};
+
 exports.updateLocation = async (req, res) => {
   const { latitude, longitude } = req.body;
   const userId = req.user.id; // JWTミドルウェアでセットされたユーザーID
 
   try {
-    // すでにある位置情報を更新 or 新規作成
+    // 位置情報の保存 or 更新
     const location = await Location.findOneAndUpdate(
       { user: userId },
       { latitude, longitude, updatedAt: new Date() },
       { upsert: true, new: true }
     );
 
-    res.status(200).json({ message: '位置情報を更新しました', location });
+    const insideCampus = isInsideCampus(latitude, longitude);
+
+    res.status(200).json({
+      message: '位置情報を更新しました',
+      insideCampus,
+      location
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: '位置情報の更新に失敗しました' });
   }
 };
+
