@@ -60,3 +60,21 @@ exports.getFriendsInCampus = async (req, res) => {
     res.status(500).json({ error: '友達の構内確認に失敗しました' });
   }
 };
+
+// ③ 友達一覧を返す処理
+exports.getFriendsList = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const user = await User.findById(userId).populate('friends');
+    const friends = user.friends.map(friend => ({
+      id: friend._id,
+      name: friend.name // もしUserモデルに名前フィールドがあれば
+    }));
+
+    res.json({ friends });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '友達一覧の取得に失敗しました' });
+  }
+};

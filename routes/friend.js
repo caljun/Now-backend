@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const { addFriend, getFriendsInCampus, getFriendsList } = require('../controllers/friendController');
 const {
   addFriend,
   getFriendsInCampus
@@ -13,3 +14,5 @@ router.post('/add', auth, addFriend);
 router.get('/in-campus', auth, getFriendsInCampus);
 
 module.exports = router;
+// 新しいルート
+router.get('/list', auth, getFriendsList);
