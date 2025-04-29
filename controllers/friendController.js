@@ -130,3 +130,36 @@ exports.getFriendRequests = async (req, res) => {
     res.status(500).json({ error: '友達リクエスト一覧の取得に失敗しました' });
   }
 };
+
+exports.acceptFriend = async (req, res) => {
+  const userId = req.user.id;
+  const { friendId } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    const friend = await User.findById(friendId);
+
+    if (!friend) return res.status(404).json({ error: '相手が見つかりません' });
+
+    // 申請が来ていない相手なら拒否
+    if (!user.friendRequests.includes(friendId)) {
+      return res.status(400).json({ error: 'そのユーザーからのリクエストは存在しません' });
+    }
+
+    // 双方向にfriends追加（まだ追加されていない場合のみ）
+    if (!user.friends.includes(friendId)) user.friends.push(friendId);
+    if (!friend.friends.includes(userId)) friend.friends.push(userId);
+
+    // リクエストから削除
+    user.friendRequests = user.friendRequests.filter(id => id.toString() !== friendId);
+
+    await user.save();
+    await friend.save();
+
+    res.status(200).json({ message: '友達リクエストを承認しました' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '承認に失敗しました' });
+  }
+};
+

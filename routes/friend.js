@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { addFriend, getFriendsInCampus, getFriendsList, requestFriend, getFriendRequests } = require('../controllers/friendController');
+const { addFriend, getFriendsInCampus, getFriendsList, requestFriend, getFriendRequests, acceptFriend } = require('../controllers/friendController');
 
 // 友達を追加（認証必要）
 router.post('/add', auth, addFriend);
@@ -15,5 +15,7 @@ router.get('/list', auth, getFriendsList);
 router.post('/request', auth, requestFriend);
 
 router.get('/requests', auth, getFriendRequests);
+
+router.post('/accept', auth, acceptFriend);
 
 module.exports = router;
