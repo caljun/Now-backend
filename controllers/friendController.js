@@ -78,3 +78,37 @@ exports.getFriendsList = async (req, res) => {
     res.status(500).json({ error: '友達一覧の取得に失敗しました' });
   }
 };
+
+// ④ 友達リクエストを送る処理
+exports.requestFriend = async (req, res) => {
+  const userId = req.user.id;
+  const { friendId } = req.body;
+
+  if (userId === friendId) {
+    return res.status(400).json({ error: '自分自身にリクエストは送れません' });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    const friend = await User.findById(friendId);
+
+    if (!friend) return res.status(404).json({ error: '友達が見つかりません' });
+
+    // すでにリクエスト済み or 既に友達なら
+    if (friend.friendRequests.includes(userId)) {
+      return res.status(400).json({ error: 'すでにリクエスト済みです' });
+    }
+    if (friend.friends.includes(userId)) {
+      return res.status(400).json({ error: 'すでに友達です' });
+    }
+
+    // 相手のfriendRequestsに自分を追加
+    friend.friendRequests.push(userId);
+    await friend.save();
+
+    res.status(200).json({ message: '友達リクエストを送りました' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '友達リクエスト送信に失敗しました' });
+  }
+};
