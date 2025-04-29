@@ -112,3 +112,21 @@ exports.requestFriend = async (req, res) => {
     res.status(500).json({ error: '友達リクエスト送信に失敗しました' });
   }
 };
+
+// ⑤ リクエスト一覧を返す処理
+exports.getFriendRequests = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const user = await User.findById(userId).populate('friendRequests', 'name'); 
+    const requests = user.friendRequests.map(request => ({
+      id: request._id,
+      name: request.name
+    }));
+
+    res.json({ requests });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '友達リクエスト一覧の取得に失敗しました' });
+  }
+};
