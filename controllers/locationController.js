@@ -3,8 +3,8 @@ const Location = require('../models/Location');
 // 関学構内判定（長方形エリア）
 const isInsideCampus = (lat, lng) => {
   return (
-    lat >= 34.788500 && lat <= 34.792500 &&
-    lng >= 135.351000 && lng <= 135.357500
+    lat <= 34.7713160 && lat >= 34.7651447 &&
+    lng >= 135.3433948 && lng <= 135.3501509
   );
 };
 
