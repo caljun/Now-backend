@@ -24,3 +24,6 @@ app.use('/api/location', require('./routes/location'));
 
 app.use('/api/friends', require('./routes/friend'));
 
+app.use('/api/areas', require('./routes/area'));
+
+
