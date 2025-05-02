@@ -27,4 +27,16 @@ router.post('/create', auth, async (req, res) => {
   }
 });
 
+// 自分が所属しているエリア一覧を取得
+router.get('/my', auth, async (req, res) => {
+    try {
+      const areas = await Area.find({ members: req.user._id }).select('name _id');
+      res.json(areas);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'エリア取得に失敗しました' });
+    }
+  });
+  
+
 module.exports = router;
