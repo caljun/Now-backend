@@ -1,9 +1,15 @@
+const express = require('express');
+const router = express.Router();
+
 const User = require('../models/user');
+const Area = require('../models/Area');
+const auth = require('../middleware/auth');
+
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // ユーザー登録処理
-exports.register = async (req, res) => {
+router.post('/register', async (req, res) => {
   const { name, email, password, profilePhoto } = req.body;
   try {
     const existingUser = await User.findOne({ email });
@@ -23,10 +29,10 @@ exports.register = async (req, res) => {
     console.error(err);
     res.status(500).json({ error: '登録に失敗しました' });
   }
-};
+});
 
 // ログイン処理
-exports.login = async (req, res) => {
+router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
@@ -43,11 +49,33 @@ exports.login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        profilePhoto: user.profilePhoto
+        profilePhoto: user.profilePhoto,
+        nowId: user.nowId
       }
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'ログインに失敗しました' });
   }
-};
+});
+
+// ✅ 自分のプロフィール情報取得
+router.get('/me', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('name nowId profilePhoto');
+    if (!user) return res.status(404).json({ error: 'ユーザーが見つかりません' });
+
+    const areas = await Area.find({ members: req.user._id }).select('name members');
+    const areaSummaries = areas.map(area => ({
+      name: area.name,
+      count: area.members.length
+    }));
+
+    res.json({ ...user.toObject(), areas: areaSummaries });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'サーバーエラー' });
+  }
+});
+
+module.exports = router;
