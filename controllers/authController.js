@@ -1,15 +1,9 @@
-const express = require('express');
-const router = express.Router();
-
 const User = require('../models/user');
 const Area = require('../models/Area');
-const auth = require('../middleware/auth');
-
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// ユーザー登録処理
-router.post('/register', async (req, res) => {
+exports.register = async (req, res) => {
   const { name, email, password, profilePhoto } = req.body;
   try {
     const existingUser = await User.findOne({ email });
@@ -29,10 +23,9 @@ router.post('/register', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: '登録に失敗しました' });
   }
-});
+};
 
-// ログイン処理
-router.post('/login', async (req, res) => {
+exports.login = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
@@ -57,10 +50,9 @@ router.post('/login', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'ログインに失敗しました' });
   }
-});
+};
 
-// ✅ 自分のプロフィール情報取得
-router.get('/me', auth, async (req, res) => {
+exports.me = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('name nowId profilePhoto');
     if (!user) return res.status(404).json({ error: 'ユーザーが見つかりません' });
@@ -76,6 +68,4 @@ router.get('/me', auth, async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'サーバーエラー' });
   }
-});
-
-module.exports = router;
+};
