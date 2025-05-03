@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // --- ルート定義 ---
-router.post('/register', register);
+router.post('/register', upload.single('profilePhoto'), register);
 router.post('/login', login);
 router.get('/me', auth, me);
 
