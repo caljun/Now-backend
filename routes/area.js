@@ -3,6 +3,7 @@ const router = express.Router();
 const Area = require('../models/Area');
 const User = require('../models/user');
 const auth = require('../middleware/auth');
+const turf = require('@turf/turf'); // ← 追加（npm install @turf/turf）
 
 // エリア作成
 router.post('/create', auth, async (req, res) => {
@@ -45,13 +46,30 @@ router.post('/:areaId/add-friend', auth, async (req, res) => {
   res.json({ message: '友達をエリアに追加しました' });
 });
 
-// エリア内の友達を取得
+// ✅ エリア内に“今いる”友達のみを返す
 router.get('/:areaId/friends-in', auth, async (req, res) => {
-  const area = await Area.findById(req.params.areaId).populate('members', 'name email profilePhoto location');
-  if (!area) return res.status(404).json({ error: 'エリアが見つかりません' });
+  try {
+    const area = await Area.findById(req.params.areaId).populate('members', 'name email profilePhoto location');
+    if (!area) return res.status(404).json({ error: 'エリアが見つかりません' });
 
-  const friends = area.members.filter(m => m._id.toString() !== req.user._id.toString());
-  res.json(friends);
+    // turf.js用ポリゴン生成（[lng, lat]順）
+    const polygon = turf.polygon([
+      area.coords.map(coord => [coord.lng, coord.lat])
+    ]);
+
+    const friendsInArea = area.members.filter(member => {
+      if (!member.location) return false;
+      const point = turf.point([member.location.longitude, member.location.latitude]);
+      return turf.booleanPointInPolygon(point, polygon);
+    });
+
+    // 自分以外を返す
+    const filtered = friendsInArea.filter(m => m._id.toString() !== req.user._id.toString());
+    res.json(filtered);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'エリア内友達取得に失敗しました' });
+  }
 });
 
 // エリア削除
@@ -60,7 +78,6 @@ router.delete('/:areaId', auth, async (req, res) => {
     const area = await Area.findById(req.params.areaId);
     if (!area) return res.status(404).json({ error: 'エリアが見つかりません' });
 
-    // 自分が作成者、または参加者であれば削除可能（必要に応じて制限）
     if (area.creator.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: '削除権限がありません' });
     }
