@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid'); // NowID生成用
 
 // ユーザー登録
 exports.register = async (req, res) => {
-  const { name, email, password, profilePhoto } = req.body;
+  const { name, email, password } = req.body;
 
   try {
     const existingUser = await User.findOne({ email });
@@ -21,16 +21,14 @@ exports.register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      profilePhoto,
-      nowId
+      nowId,
+      profilePhoto: req.file ? `/uploads/${req.file.filename}` : ''
     });
 
     await newUser.save();
 
-    // ✅ JWTトークンを発行
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    // ✅ トークンとユーザー情報を返す
     res.status(201).json({
       token,
       user: {
@@ -102,14 +100,14 @@ exports.me = async (req, res) => {
   }
 };
 
-// プロフィール更新
+// プロフィール更新（名前・画像）
 exports.updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ error: 'ユーザーが見つかりません' });
 
     if (req.body.name) user.name = req.body.name;
-    if (req.file) user.profilePhoto = `/uploads/${req.file.filename}`; // multerで保存したファイルパス
+    if (req.file) user.profilePhoto = `/uploads/${req.file.filename}`;
 
     await user.save();
     res.json({ message: 'プロフィールを更新しました' });
@@ -118,4 +116,3 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ error: 'プロフィール更新に失敗しました' });
   }
 };
-
