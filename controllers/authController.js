@@ -88,7 +88,7 @@ exports.me = async (req, res) => {
 
     const areas = await Area.find({ members: req.user._id }).select('name members');
     const areaSummaries = areas.map(area => ({
-      id: area._id,
+      _id: area._id,  // ← id → _id に変更
       name: area.name,
       count: area.members.length
     }));
@@ -110,7 +110,16 @@ exports.updateProfile = async (req, res) => {
     if (req.file) user.profilePhoto = `/uploads/${req.file.filename}`;
 
     await user.save();
-    res.json({ message: 'プロフィールを更新しました' });
+
+    res.json({
+      message: 'プロフィールを更新しました',
+      user: {
+        id: user._id,
+        name: user.name,
+        profilePhoto: user.profilePhoto,
+        nowId: user.nowId
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'プロフィール更新に失敗しました' });

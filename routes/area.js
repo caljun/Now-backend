@@ -61,7 +61,7 @@ router.delete('/:areaId', auth, async (req, res) => {
     if (!area) return res.status(404).json({ error: 'エリアが見つかりません' });
 
     // 自分が作成者、または参加者であれば削除可能（必要に応じて制限）
-    if (!area.creator.equals(req.user._id)) {
+    if (area.creator.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: '削除権限がありません' });
     }
 
