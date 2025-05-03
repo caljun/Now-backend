@@ -27,7 +27,20 @@ exports.register = async (req, res) => {
 
     await newUser.save();
 
-    res.status(201).json({ message: '登録完了' });
+    // ✅ JWTトークンを発行
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+    // ✅ トークンとユーザー情報を返す
+    res.status(201).json({
+      token,
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        profilePhoto: newUser.profilePhoto,
+        nowId: newUser.nowId
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: '登録に失敗しました' });
