@@ -90,6 +90,7 @@ exports.me = async (req, res) => {
 
     const areas = await Area.find({ members: req.user._id }).select('name members');
     const areaSummaries = areas.map(area => ({
+      id: area._id,
       name: area.name,
       count: area.members.length
     }));
