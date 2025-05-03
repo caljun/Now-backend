@@ -1,3 +1,5 @@
+const Location = require('../models/Location'); // ✅ モデル読み込み
+
 exports.updateLocation = async (req, res) => {
   const { latitude, longitude } = req.body;
   const userId = req.user.id;
@@ -18,4 +20,3 @@ exports.updateLocation = async (req, res) => {
     res.status(500).json({ error: '位置情報の更新に失敗しました' });
   }
 };
-

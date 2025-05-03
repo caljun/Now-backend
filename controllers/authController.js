@@ -86,7 +86,7 @@ exports.me = async (req, res) => {
       return res.status(404).json({ error: 'ユーザーが見つかりません' });
     }
 
-    const areas = await Area.find({ members: req.user._id }).select('name members');
+    const areas = await Area.find({ members: req.user._id }).select('_id name members');
     const areaSummaries = areas.map(area => ({
       _id: area._id,  // ← id → _id に変更
       name: area.name,
