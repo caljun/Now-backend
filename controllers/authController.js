@@ -101,3 +101,21 @@ exports.me = async (req, res) => {
     res.status(500).json({ error: 'サーバーエラー' });
   }
 };
+
+// プロフィール更新
+exports.updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ error: 'ユーザーが見つかりません' });
+
+    if (req.body.name) user.name = req.body.name;
+    if (req.file) user.profilePhoto = `/uploads/${req.file.filename}`; // multerで保存したファイルパス
+
+    await user.save();
+    res.json({ message: 'プロフィールを更新しました' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'プロフィール更新に失敗しました' });
+  }
+};
+
