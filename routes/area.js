@@ -54,4 +54,23 @@ router.get('/:areaId/friends-in', auth, async (req, res) => {
   res.json(friends);
 });
 
+// エリア削除
+router.delete('/:areaId', auth, async (req, res) => {
+  try {
+    const area = await Area.findById(req.params.areaId);
+    if (!area) return res.status(404).json({ error: 'エリアが見つかりません' });
+
+    // 自分が作成者、または参加者であれば削除可能（必要に応じて制限）
+    if (!area.creator.equals(req.user._id)) {
+      return res.status(403).json({ error: '削除権限がありません' });
+    }
+
+    await area.deleteOne();
+    res.json({ message: 'エリアを削除しました' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'サーバーエラーで削除できませんでした' });
+  }
+});
+
 module.exports = router;
