@@ -2,20 +2,29 @@ const User = require('../models/user');
 const Area = require('../models/Area');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid'); // NowID生成用
 
+// ユーザー登録
 exports.register = async (req, res) => {
   const { name, email, password, profilePhoto } = req.body;
+
   try {
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ error: 'すでに登録されています' });
+    if (existingUser) {
+      return res.status(400).json({ error: 'すでに登録されています' });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const nowId = uuidv4().slice(0, 8); // 8文字のユニークID生成
+
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
-      profilePhoto
+      profilePhoto,
+      nowId
     });
+
     await newUser.save();
 
     res.status(201).json({ message: '登録完了' });
@@ -25,14 +34,20 @@ exports.register = async (req, res) => {
   }
 };
 
+// ログイン
 exports.login = async (req, res) => {
   const { email, password } = req.body;
+
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: 'メールが見つかりません' });
+    if (!user) {
+      return res.status(400).json({ error: 'メールが見つかりません' });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ error: 'パスワードが違います' });
+    if (!isMatch) {
+      return res.status(400).json({ error: 'パスワードが違います' });
+    }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
@@ -52,10 +67,13 @@ exports.login = async (req, res) => {
   }
 };
 
+// ログイン中ユーザー情報取得
 exports.me = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('name nowId profilePhoto');
-    if (!user) return res.status(404).json({ error: 'ユーザーが見つかりません' });
+    if (!user) {
+      return res.status(404).json({ error: 'ユーザーが見つかりません' });
+    }
 
     const areas = await Area.find({ members: req.user._id }).select('name members');
     const areaSummaries = areas.map(area => ({
