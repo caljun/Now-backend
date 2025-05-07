@@ -4,6 +4,7 @@ const auth = require('../middleware/auth');
 const { register, login, me, updateProfile } = require('../controllers/authController');
 const multer = require('multer');
 const path = require('path');
+const { getUserByNowId } = require('../controllers/authController');
 
 // アップロード先とファイル名の指定
 const storage = multer.diskStorage({
@@ -25,6 +26,8 @@ router.get('/me', auth, me);
 
 // ✅ プロフィール編集（名前・写真）
 router.put('/update', auth, upload.single('profilePhoto'), updateProfile);
+
+router.get('/user-by-nowid/:nowId', getUserByNowId);
 
 module.exports = router;
 

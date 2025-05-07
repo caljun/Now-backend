@@ -129,3 +129,20 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ error: 'プロフィール更新に失敗しました' });
   }
 };
+
+// Now ID からユーザーIDを取得
+exports.getUserByNowId = async (req, res) => {
+  const { nowId } = req.params;
+
+  try {
+    const user = await User.findOne({ nowId }).select('_id');
+    if (!user) {
+      return res.status(404).json({ error: 'ユーザーが見つかりません' });
+    }
+    res.json({ id: user._id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'ユーザー検索に失敗しました' });
+  }
+};
+
