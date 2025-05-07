@@ -38,7 +38,8 @@ exports.getFriendsList = async (req, res) => {
     const user = await User.findById(userId).populate('friends');
     const friends = user.friends.map(friend => ({
       id: friend._id,
-      name: friend.name // もしUserモデルに名前フィールドがあれば
+      name: friend.name,
+      nowId: friend.nowId
     }));
 
     res.json({ friends });
