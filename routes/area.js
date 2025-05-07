@@ -4,6 +4,7 @@ const Area = require('../models/Area');
 const User = require('../models/user');
 const auth = require('../middleware/auth');
 const turf = require('@turf/turf'); // ← 追加（npm install @turf/turf）
+const Location = require('../models/Location');
 
 // エリア作成
 router.post('/create', auth, async (req, res) => {
@@ -46,32 +47,6 @@ router.post('/:areaId/add-friend', auth, async (req, res) => {
   res.json({ message: '友達をエリアに追加しました' });
 });
 
-// ✅ エリア内に“今いる”友達のみを返す
-router.get('/:areaId/friends-in', auth, async (req, res) => {
-  try {
-    const area = await Area.findById(req.params.areaId).populate('members', 'name email profilePhoto location');
-    if (!area) return res.status(404).json({ error: 'エリアが見つかりません' });
-
-    // turf.js用ポリゴン生成（[lng, lat]順）
-    const polygon = turf.polygon([
-      area.coords.map(coord => [coord.lng, coord.lat])
-    ]);
-
-    const friendsInArea = area.members.filter(member => {
-      if (!member.location) return false;
-      const point = turf.point([member.location.longitude, member.location.latitude]);
-      return turf.booleanPointInPolygon(point, polygon);
-    });
-
-    // 自分以外を返す
-    const filtered = friendsInArea.filter(m => m._id.toString() !== req.user._id.toString());
-    res.json(filtered);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'エリア内友達取得に失敗しました' });
-  }
-});
-
 // エリア削除
 router.delete('/:areaId', auth, async (req, res) => {
   try {
@@ -87,6 +62,45 @@ router.delete('/:areaId', auth, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'サーバーエラーで削除できませんでした' });
+  }
+});
+
+router.get('/:areaId/friends-in', auth, async (req, res) => {
+  try {
+    const area = await Area.findById(req.params.areaId).populate('members', 'name nowId profilePhoto');
+    if (!area) return res.status(404).json({ error: 'エリアが見つかりません' });
+
+    const polygon = turf.polygon([
+      area.coords.map(coord => [coord.lng, coord.lat])
+    ]);
+
+    const locations = await Location.find({
+      user: { $in: area.members.map(m => m._id) }
+    });
+
+    const result = area.members.map(member => {
+      const loc = locations.find(l => l.user.toString() === member._id.toString());
+      if (!loc) return null;
+
+      const point = turf.point([loc.longitude, loc.latitude]);
+      const isInArea = turf.booleanPointInPolygon(point, polygon);
+      if (!isInArea) return null;
+
+      return {
+        id: member._id,
+        name: member.name,
+        nowId: member.nowId,
+        profilePhoto: member.profilePhoto,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        updatedAt: loc.updatedAt
+      };
+    }).filter(Boolean);
+
+    res.json({ friends: result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'エリア内友達取得に失敗しました' });
   }
 });
 
