@@ -72,9 +72,16 @@ router.get('/:areaId/friends-in', auth, async (req, res) => {
 
     // === 修正点：座標を閉じる処理 ===
     const rawCoords = area.coords.map(coord => [coord.lng, coord.lat]);
-    if (rawCoords.length > 0 && JSON.stringify(rawCoords[0]) !== JSON.stringify(rawCoords[rawCoords.length - 1])) {
-      rawCoords.push(rawCoords[0]); // 閉じる
+
+    // ✅ 厳密な値比較 & deep copy
+    if (
+      rawCoords.length > 0 &&
+      (rawCoords[0][0] !== rawCoords[rawCoords.length - 1][0] ||
+       rawCoords[0][1] !== rawCoords[rawCoords.length - 1][1])
+    ) {
+      rawCoords.push([...rawCoords[0]]); // ← ここが重要
     }
+    
     const polygon = turf.polygon([rawCoords]);
 
     const locations = await Location.find({
