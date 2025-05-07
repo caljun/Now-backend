@@ -70,9 +70,12 @@ router.get('/:areaId/friends-in', auth, async (req, res) => {
     const area = await Area.findById(req.params.areaId).populate('members', 'name nowId profilePhoto');
     if (!area) return res.status(404).json({ error: 'エリアが見つかりません' });
 
-    const polygon = turf.polygon([
-      area.coords.map(coord => [coord.lng, coord.lat])
-    ]);
+    // === 修正点：座標を閉じる処理 ===
+    const rawCoords = area.coords.map(coord => [coord.lng, coord.lat]);
+    if (rawCoords.length > 0 && JSON.stringify(rawCoords[0]) !== JSON.stringify(rawCoords[rawCoords.length - 1])) {
+      rawCoords.push(rawCoords[0]); // 閉じる
+    }
+    const polygon = turf.polygon([rawCoords]);
 
     const locations = await Location.find({
       user: { $in: area.members.map(m => m._id) }
