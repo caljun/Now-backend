@@ -29,6 +29,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/location', require('./routes/location'));
 app.use('/api/friends', require('./routes/friend'));
 app.use('/api/areas', require('./routes/area'));
+app.use('/api/areas/requests', require('./routes/areaRequestRoutes'));
 
 // サーバー起動
 const PORT = process.env.PORT || 5000;
