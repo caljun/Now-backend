@@ -7,11 +7,13 @@ const turf = require('@turf/turf'); // ← 追加（npm install @turf/turf）
 const Location = require('../models/Location');
 
 // エリア作成
-router.post('/create', auth, async (req, res) => {
-  const { name, coords } = req.body;
-  if (!name || !coords || coords.length < 3) {
+router.post('/', auth, async (req, res) => {
+  const { name, coordinates } = req.body;
+  if (!name || !coordinates || coordinates.length < 3) {
     return res.status(400).json({ error: '正しいエリア情報を入力してください' });
   }
+
+  const coords = coordinates.map(([lng, lat]) => ({ lng, lat }));
 
   const area = new Area({
     name,
@@ -20,8 +22,13 @@ router.post('/create', auth, async (req, res) => {
     members: [req.user._id]
   });
 
-  await area.save();
-  res.status(201).json(area);
+  try {
+    await area.save();
+    res.status(201).json(area);
+  } catch (err) {
+    console.error('エリア作成エラー:', err);
+    res.status(500).json({ error: 'エリアの作成に失敗しました' });
+  }
 });
 
 // 自分の所属エリア一覧取得
