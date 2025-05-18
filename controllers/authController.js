@@ -22,7 +22,7 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       nowId,
-      profilePhoto: req.file ? `/uploads/${req.file.filename}` : ''
+      profilePhoto: req.body.profilePhoto || '' // Cloudinary URLを直接保存
     });
 
     await newUser.save();
@@ -107,11 +107,7 @@ exports.updateProfile = async (req, res) => {
     if (!user) return res.status(404).json({ error: 'ユーザーが見つかりません' });
 
     if (req.body.name) user.name = req.body.name;
-
-    if (req.file) {
-      const baseUrl = process.env.BASE_URL || 'https://now-backend-wah5.onrender.com';
-      user.profilePhoto = `${baseUrl}/uploads/${req.file.filename}`;
-    }
+    if (req.body.profilePhoto) user.profilePhoto = req.body.profilePhoto;
 
     await user.save();
 
